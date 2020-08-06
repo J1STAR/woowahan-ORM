@@ -21,7 +21,7 @@ exports.generateCreateTableQueryStmt = (tableName, attributes) => `
         `
       );
     }, "")}
-
+    \`isDeleted\` tinyint(1) DEFAULT '0',
     \`createdAt\` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
     \`updatedAt\` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (\`id\`),

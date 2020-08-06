@@ -4,6 +4,7 @@ const DataTypes = require("./data-types");
 class Model {
   static defaultAttributes = {
     id: { dataType: DataTypes.INTEGER },
+    isDeleted: { dataType: DataTypes.BOOLEAN },
     createdAt: { dataType: DataTypes.TIMESTAMP },
     updatedAt: { dataType: DataTypes.TIMESTAMP },
   };
@@ -13,18 +14,26 @@ class Model {
     this.isSync = isSync;
   }
 
-  static validationError = (attribute) => {
-    const err = Error(`The value for ${attribute} is invalid.`);
+  static create404Error = (message) => {
+    const err = new Error(message);
     err.status = 400;
     return err;
   };
 
+  static validationError = (attribute) =>
+    this.create404Error(`The value for ${attribute} is invalid.`);
+
   /**
    * @param {Record<string, { dataType: string, required: boolean, defaultValue: unknown }>} attributes
    */
-  static init = function (attributes, { defaultWhere }) {
+  static init = function (attributes, defaultWhere = {}) {
+    if (!attributes) {
+      throw this.create404Error("attributes not given for a model");
+    }
+
     this.attributes = attributes;
-    this.defaultWhere = defaultWhere;
+    this.defaultWhere = { ...defaultWhere, isDeleted: 0 };
+    console.log(this.defaultWhere);
     if (this.isSync) this.sync();
   };
 
@@ -33,22 +42,18 @@ class Model {
       this.name,
       this.attributes
     );
-    console.log(createTableQuery);
     return await this.pool.query(createTableQuery);
   };
 
   static validate = function (input) {
     const validatedInput = {};
+    const attributes = { ...this.attributes, ...this.defaultAttributes };
     for (const [name, value] of Object.entries(input)) {
       // console.log(name, value)
-      if (
-        !this.attributes[name] ||
-        !this.defaultAttributes[name] ||
-        value === undefined
-      ) {
+      if (!attributes[name] || value === undefined) {
         continue;
       }
-      switch (this.attributes[name].dataType) {
+      switch (attributes[name].dataType) {
         case DataTypes.BOOLEAN:
           if (value == 0 || value == 1) validatedInput[name] = value;
           else throw this.validationError(name);
