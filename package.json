@@ -12,7 +12,6 @@
   },
   "license": "MIT",
   "dependencies": {
-    "mysql2": "^2.1.0",
-    "http-errors": "^1.6.3"
+    "mysql2": "^2.1.0"
   }
 }
