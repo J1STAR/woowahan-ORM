@@ -64,7 +64,7 @@ class Product extends Model {
         featured: { dataType: DataTypes.BOOLEAN, defaultValue: '0' },
       },
       {
-        defaultWhere: { featured: '1' },
+        featured: '1',
       }
     )
   }
