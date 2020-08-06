@@ -49,7 +49,7 @@ exports.generateFindQueryStmt = ({
   } 
   ${!rawWhere || isEmpty(where) ? `` : ` AND `}
   ${rawWhere ?? ""}
-  ${sortBy ? `ORDER BY ${sortBy.columnName} ${sortBy.order} ` : ""}
+  ${sortBy ? `ORDER BY ${sortBy.attribute} ${sortBy.order} ` : ""}
   ${isOne ? "LIMIT 1" : ""}
 `;
 
