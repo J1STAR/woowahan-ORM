@@ -20,6 +20,7 @@ const woowahanORM = require('woowahan-orm')
 ```
 
 ## Connecting a Database
+
 To connect to the database, you must passdown the connection parameters to the woowahanORM instance. 
 
 You can set `sync` `true` for the tables to be created if they do not exist in the connected Database.
@@ -45,7 +46,7 @@ After a connection is made, it is available to create Table Models extending `Wo
 | Name       | Type    | Default    | Description | 
 | -------- | ----------- | -------- | ----------- |
 | `attributes` | `object` | `undefined` | A hash of attributes with `dataType(Required)`, `required(Optional)`, `defaultValue(Optional)`
-| `defaultWhere` | `object` | `undefined` | A hash of attributes that should be always include in `findQueries`.
+| `defaultWhere` | `object` | `undefined` | A hash of attributes that should be always included in `where`.
 
 **`defaultWhere` is automatically added to `where` when `Model.findAll` or `Model.findOne` is called.**
 
@@ -54,16 +55,16 @@ After a connection is made, it is available to create Table Models extending `Wo
 ```js
 const { Model, DataTypes } = require('woowahan-orm')
 
-class User extends Model {
+class Product extends Model {
   static init() {
     return super.init(
       {
-        username: { dataType: DataTypes.STRING, required: true },
-        nickname: { dataType: DataTypes.STRING, required: true },
-        isDeleted: { dataType: DataTypes.BOOLEAN, defaultValue: '0' },
+        name: { dataType: DataTypes.STRING, required: true },
+        brandName: { dataType: DataTypes.STRING, required: true },
+        featured: { dataType: DataTypes.BOOLEAN, defaultValue: '0' },
       },
       {
-        defaultWhere: { isDeleted: '0' },
+        defaultWhere: { featured: '1' },
       }
     )
   }
@@ -72,7 +73,14 @@ class User extends Model {
 module.exports = User
 ```
 
-> `id`, `createdAt`, `updatedAt` are auto-generated for every Model.
+> `id`, `createdAt`, `updatedAt`, `isDeleted` are auto-generated for every Model.
+
+```js 
+id: { dataType: DataTypes.INTEGER },
+isDeleted: { dataType: DataTypes.BOOLEAN },
+createdAt: { dataType: DataTypes.TIMESTAMP },
+updatedAt: { dataType: DataTypes.TIMESTAMP },
+```
 
 
 ## Supported Types 
@@ -89,15 +97,53 @@ STRING: "varchar(255)",
 TEXT: "text",
 ```
 
+## Validation
+
+All of the input object is validated using the internal validation function. 
+
+Validation is done for every Input(`create`, `update`, `findOne`, `fineAll`).
+
+### Filtering not related input
+Input not defined in the attributes will be not filtered.
+
+#### Example
+
+For `Product Class` example above, validation will be done like below.
+
+```js
+const product = await Product.create({
+  brandName: 'Innisfree',
+  name: 'Green tea toner',
+  wrong: 'this is wrong' // will be ignored
+}) // will be successfully created
+```
+
+### Type Check
+
+If the input type for the according attribute is incorrect, then it throws `400 Error`
+
+
+#### Example
+
+```js
+const product = await Product.create({
+  brandName: 1, // wrong type which will cause 400 Error
+  name: 'Green tea toner',
+})
+```
+
+
+
 ## Query 
 
 ### Model.create
+
+Builds a new model instance and calls save on it.
 
 ```js
 public static async create(values: object): Promise<Model>
 ```
 
-Builds a new model instance and calls save on it.
 
 
 #### Example
@@ -106,7 +152,8 @@ const jane = await User.create({ name: "Jane" });
 ```
 
 ### Model.update
-Update a model instance. **Must pass `id` in the values.(BulkUpdate not supported for v1.0.0)**
+
+Update a model instance. **Must pass `id` in the values.(BulkUpdate not supported)**
 
 ```js
 public static async update(values: object): Promise<void>
@@ -120,6 +167,7 @@ await User.update({ id: req.user.id, nickname: "Jane" });
 
 
 ### Model.findAll
+
 Find all model instances match the options.
 
 ```js
@@ -182,7 +230,10 @@ const user = await User.findOne({
 ### Model.delete
 Delete a model instance with `id`. 
 
-**Currently deleting doesn't delete the instance, it changes `isDeleted` attribute to `true `.**
+Deleting doesn't delete the instance, it changes `isDeleted` attribute to `true `.
+
+**Find Queries will automatically ignore instances with `isDeleted: true`**
+
 
 ```js
 public static async delete(id: number): Promise<void>
