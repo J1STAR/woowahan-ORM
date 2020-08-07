@@ -1,7 +1,7 @@
 const { Model, DataTypes } = require("./model");
 const mysql = require("mysql2/promise");
 
-module.exports = ({ host, user, password, database }, sync = false) => {
+module.exports = ({ host, user, password, database }, options) => {
   const pool = mysql.createPool({
     host,
     user,
@@ -12,7 +12,8 @@ module.exports = ({ host, user, password, database }, sync = false) => {
     queueLimit: 0,
   });
 
-  Model.createConnection(pool, sync);
+  Model.createConnection(pool, options);
+  console.log(`WoowaORM: Database connected`);
 };
 
 module.exports.Model = Model;

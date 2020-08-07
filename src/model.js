@@ -9,40 +9,53 @@ class Model {
     updatedAt: { dataType: DataTypes.TIMESTAMP },
   };
 
-  static createConnection(pool, isSync) {
+  static createConnection(pool, options) {
     this.pool = pool;
-    this.isSync = isSync;
+    this.options = options;
   }
 
-  static create404Error = (message) => {
+  static create400Error = (message) => {
     const err = new Error(message);
     err.status = 400;
     return err;
   };
 
   static validationError = (attribute) =>
-    this.create404Error(`The value for ${attribute} is invalid.`);
+    this.create400Error(`The value for ${attribute} is invalid.`);
 
   /**
    * @param {Record<string, { dataType: string, required: boolean, defaultValue: unknown }>} attributes
    */
   static init = function (attributes, defaultWhere = {}) {
     if (!attributes) {
-      throw this.create404Error("attributes not given for a model");
+      throw this.create400Error("attributes not given for a model");
     }
 
     this.attributes = attributes;
     this.defaultWhere = { ...defaultWhere, isDeleted: 0 };
-    console.log(this.defaultWhere);
-    if (this.isSync) this.sync();
+    this.start();
   };
 
-  static sync = async function () {
+  static start = async function () {
+    if (this.options) {
+      if (this.options.sync?.force) await this.dropTable();
+      if (this.options.sync) await this.createTable();
+    }
+  };
+
+  static createTable = async function () {
     const createTableQuery = queryGenerator.generateCreateTableQueryStmt(
       this.name,
       this.attributes
     );
-    return await this.pool.query(createTableQuery);
+    await this.pool.query(createTableQuery);
+    console.log(`WoowaORM: Table ${this.name} Created.`);
+  };
+
+  static dropTable = async function () {
+    const dropTableQuery = queryGenerator.generateDropTableQueryStmt(this.name);
+    await this.pool.query(dropTableQuery);
+    console.log(`WoowaORM: Table ${this.name} Dropped.`);
   };
 
   static validate = function (input) {
@@ -131,7 +144,10 @@ class Model {
 
   static create = async function (input) {
     const validatedInput = this.validate(input);
-    const queryStmt = queryGenerator.generateCreateQueryStmt(validatedInput);
+    const queryStmt = queryGenerator.generateCreateQueryStmt(
+      this.name,
+      validatedInput
+    );
 
     return {
       id: (await this.pool.query(queryStmt))[0].insertId,
@@ -142,13 +158,16 @@ class Model {
   static update = async function (input) {
     if (!input.id) throw this.validationError("id");
     const validatedInput = this.validate(input);
-    const queryStmt = queryGenerator.generateUpdateQueryStmt(validatedInput);
+    const queryStmt = queryGenerator.generateUpdateQueryStmt(
+      this.name,
+      validatedInput
+    );
     return await this.pool.query(queryStmt);
   };
 
   static delete = async function (id) {
     if (!id) throw this.validationError("id");
-    const queryStmt = queryGenerator.generateDeleteQueryStmt(id);
+    const queryStmt = queryGenerator.generateDeleteQueryStmt(this.name, id);
     return await this.pool.query(queryStmt);
   };
 }
