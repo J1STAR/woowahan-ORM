@@ -144,7 +144,10 @@ class Model {
 
   static create = async function (input) {
     const validatedInput = this.validate(input);
-    const queryStmt = queryGenerator.generateCreateQueryStmt(validatedInput);
+    const queryStmt = queryGenerator.generateCreateQueryStmt(
+      this.name,
+      validatedInput
+    );
 
     return {
       id: (await this.pool.query(queryStmt))[0].insertId,
@@ -155,13 +158,16 @@ class Model {
   static update = async function (input) {
     if (!input.id) throw this.validationError("id");
     const validatedInput = this.validate(input);
-    const queryStmt = queryGenerator.generateUpdateQueryStmt(validatedInput);
+    const queryStmt = queryGenerator.generateUpdateQueryStmt(
+      this.name,
+      validatedInput
+    );
     return await this.pool.query(queryStmt);
   };
 
   static delete = async function (id) {
     if (!id) throw this.validationError("id");
-    const queryStmt = queryGenerator.generateDeleteQueryStmt(id);
+    const queryStmt = queryGenerator.generateDeleteQueryStmt(this.name, id);
     return await this.pool.query(queryStmt);
   };
 }
