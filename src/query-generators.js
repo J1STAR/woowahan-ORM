@@ -8,6 +8,10 @@ const wrapBacktick = (input) => {
   return input.map((str) => "`" + str + "`");
 };
 
+exports.generateDropTableQueryStmt = (tableName) => `
+  DROP TABLE IF EXISTS ${tableName};
+`;
+
 exports.generateCreateTableQueryStmt = (tableName, attributes) => `
   CREATE TABLE IF NOT EXISTS ${wrapBacktick(tableName)} (
     \`id\` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
