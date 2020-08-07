@@ -23,9 +23,7 @@ const woowahanORM = require('woowahan-orm')
 
 To connect to the database, you must passdown the connection parameters to the woowahanORM instance. 
 
-You can set `sync` `true` for the tables to be created if they do not exist in the connected Database.
-
-### woowahanORM(connectionParams, { sync : false })
+### woowahanORM(connectionParams, options)
 
 ```js
 woowahanORM({
@@ -34,21 +32,40 @@ woowahanORM({
       password: process.env.DB_PASSWORD,
       database: process.env.DB_NAME,
     },
-    sync: false
+    {
+      sync: {
+            force: false
+      }
+    }
 )
 ```
+
+#### options
+
+| Name       | Type    | Attributes    | Description | 
+| -------- | ----------- | -------- | ----------- |
+| `options` | `object` | `optional` | A hash of options(currently only sync exists)
+| `options.sync` | `object` | `optional`, `default: false`| Sync this Model to the DB, that is create the table.
+
+
+### Sync
+
+- `sync` option not provided : no sync
+- `sync` with `force` `false` : create tables if not exist
+- `sync` with `force` `true` : drop and create tables
 
 ## Defining a Table
 
 After a connection is made, it is available to create Table Models extending `WoowahanORM.Model`
 
 #### options
-| Name       | Type    | Default    | Description | 
-| -------- | ----------- | -------- | ----------- |
-| `attributes` | `object` | `undefined` | A hash of attributes with `dataType(Required)`, `required(Optional)`, `defaultValue(Optional)`
-| `defaultWhere` | `object` | `undefined` | A hash of attributes that should be always included in `where`.
 
-**`defaultWhere` is automatically added to `where` when `Model.findAll` or `Model.findOne` is called.**
+| Name       | Type    | Attribute    | Description | 
+| -------- | ----------- | -------- | ----------- |
+| `attributes` | `object` | `required` | A hash of attributes with `dataType(Required)`, `required(Optional)`, `defaultValue(Optional)`
+| `defaultWhere` | `object` | `optional` | A hash of attributes that should be always included in `where`.
+
+**`defaultWhere` is automatically added to `where` when `find` calls are called.**
 
 #### Example
 
@@ -61,10 +78,10 @@ class Product extends Model {
       {
         name: { dataType: DataTypes.STRING, required: true },
         brandName: { dataType: DataTypes.STRING, required: true },
-        featured: { dataType: DataTypes.BOOLEAN, defaultValue: '0' },
+        isFeatured: { dataType: DataTypes.BOOLEAN, defaultValue: true },
       },
       {
-        featured: '1',
+        isFeatured: false,
       }
     )
   }
@@ -147,6 +164,7 @@ public static async create(values: object): Promise<Model>
 
 
 #### Example
+
 ```js
 const jane = await User.create({ name: "Jane" });
 ```
@@ -161,6 +179,7 @@ public static async update(values: object): Promise<void>
 
 
 #### Example
+
 ```js
 await User.update({ id: req.user.id, nickname: "Jane" });
 ```
@@ -177,13 +196,13 @@ public static async findAll(options: object): Promise<Array<Model>>
 #### Params
 
 
-| Name       | Type    | Default    | Description | 
+| Name       | Type    | Attribute    | Description | 
 | -------- | ----------- | -------- | ----------- |
-| `options` | `object` | `undefined` | A hash of options to describe the scope of the search
-| `options.attributes	` | `string` | `'*'` | A Comma Separated list of the attributes that you want to select
-| `options.where` | `object` | `undefined` | A hash of attributes to describe your search (**v 1.0.0 only Exact Match is supported**)
-| `options.rawWhere	` | `string` | `''` | A raw subQuery you can put in `where`
-| `options.sortBy	` | `object` | `'undefined'` | Specifies an ordering. (object needs to has two keys `attribute`, `order`.
+| `options` | `object` | `optional` | A hash of options to describe the scope of the search
+| `options.attributes	` | `string` | `optional`, `default: '*'` | A Comma Separated list of the attributes that you want to select
+| `options.where` | `object` | `optional` | A hash of attributes to describe your search (**v 1.0.0 only Exact Match is supported**)
+| `options.rawWhere` | `string` | `optional` | A raw subQuery you can put in `where`
+| `options.sortBy	` | `object` | `optional` | Specifies an ordering. (object needs to has two keys `attribute`, `order`).
 
 #### Example
 
@@ -206,6 +225,7 @@ cosnt monthlyExpenditure = await Expenditure.findAll({ '*', where: { userId: req
 ```
 
 ### Model.findOne
+
 Find the first model instance that matches the options.
 
 ```js
