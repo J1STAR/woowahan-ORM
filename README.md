@@ -1,4 +1,4 @@
-# Woowahan-ORM
+# woowahan-ORM
 
 ![license](https://img.shields.io/github/license/zoomkoding/woowahan-orm)
 ![version](https://img.shields.io/github/v/release/zoomkoding/woowahan-orm?include_prereleases&sort=semver&label=version)
